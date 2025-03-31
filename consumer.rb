@@ -4,9 +4,9 @@ require 'json'
 class VideoServer 
     attr_reader :port, :server
 
-    def initialize(port, hostname, video_directory)
+    def initialize(port, bound_addr, video_directory)
         @port = port
-        @hostname = hostname
+        @bound_addr = bound_addr
         @video_directory = video_directory
     end
 
@@ -42,7 +42,7 @@ class VideoServer
     end
 
     def mainloop
-        @server = TCPServer.open(@hostname, @port)
+        @server = TCPServer.open(@bound_addr, @port)
         puts "Listening on port #{@port}"
 
         loop do
