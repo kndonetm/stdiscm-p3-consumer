@@ -1,0 +1,13 @@
+<div class="full-screen-container">
+<%# the "body" container in between navbar and footer %>
+  <div class="content-container">
+
+  <%# the container of all the displayed videos %>
+    <div class="video-container">
+
+        <%# display each video %>
+        <% @video_files.each do |video_file| %>
+            <%= render "layouts/videoItem", video_file: video_file %> 
+        <% end %>
+  </div>
+</div>
