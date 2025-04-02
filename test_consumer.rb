@@ -5,7 +5,7 @@ $LOAD_PATH << '.'
 require 'consumer'
 
 thread = Thread.start(
-    VideoServer.new(ENV["PORT"], ENV["BOUND_ADDR"], ENV["VIDEO_DIRECTORY"])
+    VideoServer.new(ENV)
 ) do |server| 
     server.mainloop 
 end

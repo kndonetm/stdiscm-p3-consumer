@@ -4,10 +4,10 @@ require 'json'
 class VideoServer 
     attr_reader :port, :server
 
-    def initialize(port, bound_addr, video_directory)
-        @port = port
-        @bound_addr = bound_addr
-        @video_directory = video_directory
+    def initialize(settings)
+        @port = settings["PORT"]
+        @bound_addr = settings["BOUND_ADDR"]
+        @video_directory = settings["VIDEO_DIRECTORY"]
     end
 
     def receive_command(socket)
