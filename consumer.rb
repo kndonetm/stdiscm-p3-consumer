@@ -10,11 +10,19 @@ class VideoServer
         @video_directory = settings["VIDEO_DIRECTORY"]
     end
 
-    def receive_video(size, socket)
-        data = socket.read size
-        puts "Received video of size #{size} from client"
+    def receive_video(size, socket, filepath)
+        file = File.new(filepath, "wb") 
+        num_full_blocks = size / 65536
+        num_full_blocks.times do 
+            file.write(socket.read(65536))
+        end
+        file.write(socket.read(size - (num_full_blocks * 65536)))
+
+        file.close
         send_ok socket
-        return data
+
+        puts "Received video of size #{size} from client"
+        puts "Created new file in #{filepath}"
     end
 
     def receive_command(socket)
@@ -39,13 +47,8 @@ class VideoServer
             cmd = JSON.parse(raw_cmd)
             
             if cmd["action"] == "sendFile" then
-                data = receive_video cmd["size"], client
+                receive_video cmd["size"], client, File.join(@video_directory, cmd["filename"])
         
-                filepath = File.join(@video_directory, cmd["filename"])
-                file = File.new(filepath, "wb") 
-                file.write(data)
-                file.close
-                puts "Created new file in #{filepath}"
             elsif cmd["action"] == "exit" then
                 client.close
                 return
