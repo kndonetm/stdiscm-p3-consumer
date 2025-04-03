@@ -22,42 +22,8 @@ Ensure the following are installed:
     
     Ensure network access to the consumer machine's port.
 
+
 ## Setup Instructions 
-### ***Producer Setup***
-1. Clone the repository or download the Zip file.
-    ```sh
-    git clone https://github.com/kndonetm/stdiscm-p3-producer.git
-    ```
-
-2. In a **(Ubuntu) WSL terminal**, navigate into the project.
-    ```sh
-    cd stdiscm-p3-producer
-    ```
-
-3. Install the dependencies.
-    ```sh
-    bundle install
-    ```
-
-4. Set up the configuration by copying the `.env.example` template:
-    ```sh
-    cp .env.example .env
-    ```
-    
-    Edit the `.env` with required variables:
-    ```ini
-    NUM_PRODUCER_THREADS=4        # Adjust the number of producer threads as needed
-    HOSTNAME=localhost            # Set the appropriate hostname
-    PORT=3000                     # Set the port for communication
-    VIDEO_DIRECTORIES=/path/to/videos  # Set video directories
-    ```
-
-5. Create storage directory for videos
-    ```sh
-    mkdir -p uploaded_videos        # Creating file directory for uploaded videos
-    chmod 775 uploaded_videos       # Setting up permissions
-    ```
-
 
 ### ***Consumer Setup***
 
@@ -106,6 +72,43 @@ Ensure the following are installed:
     cd server                       # Navigate inside the server
     bundle install                  # Install the dependencies
     ```
+
+
+### ***Producer Setup***
+1. Clone the repository or download the Zip file.
+    ```sh
+    git clone https://github.com/kndonetm/stdiscm-p3-producer.git
+    ```
+
+2. In a **(Ubuntu) WSL terminal**, navigate into the project.
+    ```sh
+    cd stdiscm-p3-producer
+    ```
+
+3. Install the dependencies.
+    ```sh
+    bundle install
+    ```
+
+4. Set up the configuration by copying the `.env.example` template:
+    ```sh
+    cp .env.example .env
+    ```
+    
+    Edit the `.env` with required variables:
+    ```ini
+    NUM_PRODUCER_THREADS=4        # Adjust the number of producer threads as needed
+    HOSTNAME=localhost            # Set the appropriate hostname
+    PORT=3000                     # Set the port for communication
+    VIDEO_DIRECTORIES=/path/to/videos  # Set video directories
+    ```
+
+5. Create storage directory for videos
+    ```sh
+    mkdir -p uploaded_videos        # Creating file directory for uploaded videos
+    chmod 775 uploaded_videos       # Setting up permissions
+    ```
+
 
 ## Execution
 1. **Start the frontend (consumer):**
