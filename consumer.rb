@@ -22,12 +22,12 @@ class VideoServer
             thread["status"].extend(MonitorMixin)
             thread["status_cond"] = thread["status"].new_cond
 
-            thread["port"] = @port + i + 1
-
             @threads << thread
         end
 
         @queue = []
+        @queue.extend(MonitorMixin)
+        @queue_cond = @queue.new_cond
 
         @ready_to_accept = []
         @ready_to_accept.extend(MonitorMixin)
@@ -38,23 +38,24 @@ class VideoServer
         puts "Created consumer thread with id #{id}"
         
         loop do
-            Thread.current["status"].synchronize do
-                Thread.current["status_cond"].wait_while { Thread.current["status"][0] == "idle" }
+            request = nil
+            @queue.synchronize do
+                @queue_cond.wait_while { @queue.empty? }
+                request = @queue.shift 
             end
 
-            num_videos = Thread.current["num_videos"]
-            producer_ip = Thread.current["ip"]
-            request_id = Thread.current["request_id"]
+            producer_ip, request_id, num_videos = request
+            worker_thread_port = @port + id + 1
 
             puts "Host thread #{id} assigned to receive #{num_videos} videos from producer #{producer_ip} thread #{request_id}"
 
             @ready_to_accept.synchronize do
-                @ready_to_accept << Thread.current
+                @ready_to_accept << [request_id, worker_thread_port, num_videos]
                 @ready_to_accept_cond.signal
             end
 
-            puts "Thread #{id} opening TCP server to #{producer_ip} on port #{Thread.current["port"]}"
-            server = TCPServer.open(producer_ip, Thread.current["port"])
+            puts "Thread #{id} opening TCP server to #{producer_ip} on port #{worker_thread_port}"
+            server = TCPServer.open(producer_ip, worker_thread_port)
             client = server.accept
             
             num_videos.times do 
@@ -85,10 +86,20 @@ class VideoServer
         end
     end
 
-    def get_free_threads
+    def add_to_queue(requests)
+        @queue.synchronize do
+            requests.each do |request|
+                @queue << request
+            end
+            @queue_cond.signal
+        end
+    end
+
+    def get_num_free_threads
         @threads.each_with_index.select { |thread, id|
             thread["status"][0] == "idle" 
         }
+        .length
     end
 
     def get_num_videos_in_queue
@@ -140,10 +151,11 @@ class VideoServer
         })
     end
 
-    def thread_ready_response(producer_thread_id, port)
+    def thread_ready_response(producer_thread_id, port, num_videos)
         return JSON.generate({
             id: producer_thread_id,
-            port: port
+            port: port,
+            num_videos: num_videos
         })
     end
 
@@ -159,22 +171,23 @@ class VideoServer
             elsif cmd["action"] == "requestThreads" then
                 thread_requests = cmd["video_counts"]
                 num_requested_threads = thread_requests.length
+                current_queue_size = get_num_videos_in_queue
+                space_remaining_in_queue = @queue_length - current_queue_size
+                free_threads = get_num_free_threads
 
-                free_threads = get_free_threads
-                num_assigned_threads = [num_requested_threads, free_threads.length].min
-                assigned_threads = free_threads[0, num_assigned_threads]
-                assigned_threads.each_with_index.each do |thread_info, request_id|
-                    id = thread_info[1]
-                    assign_thread @threads[id], thread_requests[request_id], client_ip, request_id
-                    puts "Assigned thread #{id} to request ID #{request_id}"
+                num_assigned_threads = [num_requested_threads, free_threads].min
+                assigned_requests = (0..num_assigned_threads-1).map { |request_id|
+                    [client_ip, request_id, thread_requests[request_id]]
+                }
+
+                add_to_queue assigned_requests
+                assigned_requests.each do |ip, id, num_videos|
+                    puts "Added assigned request ID #{id} from #{ip} to upload #{num_videos}} to queue"
                 end
 
-                assigned_requests = assigned_threads.map {|thread, id| id}
                 queued_requests = []
 
                 if num_requested_threads > num_assigned_threads then
-                    current_queue_size = get_num_videos_in_queue
-                    space_remaining_in_queue = @queue_length - current_queue_size
                     unassigned_thread_requests = thread_requests.each_with_index.to_a[
                         num_assigned_threads..thread_requests.length
                     ]
@@ -185,28 +198,31 @@ class VideoServer
                         if space_occupied_by_requests + num_videos > space_remaining_in_queue then
                             # add as many remaining videos as possible to the queue
                             if space_occupied_by_requests != space_remaining_in_queue then
-                                @queue << [client_ip, id, space_remaining_in_queue - space_occupied_by_requests]
-                                puts "Queued #{space_remaining_in_queue - space_occupied_by_requests} videos from #{client_ip} producer thread #{id}"
-                                queued_requests << id
+                                queued_requests << [client_ip, id, space_remaining_in_queue - space_occupied_by_requests]
                             end
-
                             break
                         end
 
                         space_occupied_by_requests += num_videos
-                        @queue << [client_ip, id, num_videos]
-                        queued_requests << id
-                        puts "Queued #{num_videos} videos from #{client_ip} producer thread #{id}"
+                        queued_requests << [client_ip, id, num_videos]
+                    end
+
+                    add_to_queue queued_requests
+                    queued_requests.each do |ip, id, num_videos|
+                        puts "Added queued request ID #{id} from #{ip} to upload #{num_videos} video to queue"
                     end
                 end
+                
+                assigned_request_ids = (0..num_assigned_threads-1).to_a
+                queued_request_ids = queued_requests.map {|_, id, _| id}
 
-                send_json request_threads_response(assigned_requests, queued_requests), client
+                send_json request_threads_response(assigned_request_ids, queued_request_ids), client
 
-                assigned_requests.each do
+                (assigned_request_ids.length + queued_request_ids.length).times do
                     @ready_to_accept.synchronize do
                         @ready_to_accept_cond.wait_while { @ready_to_accept.empty? }
-                        ready_thread = @ready_to_accept.shift
-                        send_json thread_ready_response(ready_thread["request_id"], ready_thread["port"]), client
+                        request_id, port, num_videos = @ready_to_accept.shift
+                        send_json thread_ready_response(request_id, port, num_videos), client
                     end
                 end
 
