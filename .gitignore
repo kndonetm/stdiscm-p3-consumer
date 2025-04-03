@@ -1,5 +1,6 @@
 # don't include uploaded videos
 received_videos/*
+videos/
 
 *.gem
 *.rbc
