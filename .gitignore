@@ -1,5 +1,5 @@
 # don't include uploaded videos
-videos
+received_videos
 
 *.gem
 *.rbc
