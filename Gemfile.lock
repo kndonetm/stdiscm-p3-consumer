@@ -83,7 +83,7 @@ GEM
     bindex (0.8.1)
     bootsnap (1.18.4)
       msgpack (~> 1.2)
-    brakeman (7.0.0)
+    brakeman (7.0.1)
       racc
     builder (3.3.0)
     capybara (3.40.0)
@@ -173,6 +173,8 @@ GEM
     net-ssh (7.3.0)
     nio4r (2.7.4)
     nokogiri (1.18.7-x64-mingw-ucrt)
+      racc (~> 1.4)
+    nokogiri (1.18.7-x86_64-linux-gnu)
       racc (~> 1.4)
     ostruct (0.6.1)
     parallel (1.26.3)
@@ -318,6 +320,7 @@ GEM
 
 PLATFORMS
   x64-mingw-ucrt
+  x86_64-linux
 
 DEPENDENCIES
   bootsnap
