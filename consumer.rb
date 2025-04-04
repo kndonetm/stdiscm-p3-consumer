@@ -1,18 +1,35 @@
 require 'socket'
 require 'json'
+require 'resolv'
 
 class VideoServer 
     attr_reader :port, :server
 
     def initialize(settings)
-        @port = settings["PORT"].to_i
+        @port = string_to_i_safe(settings["PORT"], "PORT", min=0, max=65535)
         @bound_addr = settings["BOUND_ADDR"]
         @video_directory = settings["VIDEO_DIRECTORY"]
-        @num_threads = settings["NUM_CONSUMER_THREADS"].to_i
-        @queue_length = settings["MAX_QUEUE_LENGTH"].to_i
+        @num_threads = string_to_i_safe(settings["NUM_CONSUMER_THREADS"], "NUM_CONSUMER_THREADS", min=1, max=256)
+        @queue_length = string_to_i_safe(settings["MAX_QUEUE_LENGTH"], "MAX_QUEUE_LENGTH", min=0, max=256)
+
+        if not File.directory? @video_directory then
+            raise ArgumentError.new("VIDEO_DIRECTORY is not a directory, got \"#{@video_directory}\"")
+        end
+
+        if not !!(@bound_addr =~ Resolv::AddressRegex) and not @bound_addr == "localhost" then
+            raise ArgumentError.new("BOUND_ADDR is not a valid IP address, got \"#{@bound_addr}\"")
+        end
 
         @threads = []
         
+        @queue = []
+        @queue.extend(MonitorMixin)
+        @queue_cond = @queue.new_cond
+
+        @ready_to_accept = []
+        @ready_to_accept.extend(MonitorMixin)
+        @ready_to_accept_cond = @ready_to_accept.new_cond
+
         for i in 0..@num_threads - 1 do
             thread = Thread.start(i) do |id| 
                 worker_thread id
@@ -24,14 +41,24 @@ class VideoServer
 
             @threads << thread
         end
+    end
 
-        @queue = []
-        @queue.extend(MonitorMixin)
-        @queue_cond = @queue.new_cond
+    def string_to_i_safe(string, variable_name="variable", min=nil, max=nil)
+        val = string.to_i
 
-        @ready_to_accept = []
-        @ready_to_accept.extend(MonitorMixin)
-        @ready_to_accept_cond = @ready_to_accept.new_cond
+        if val.to_s != string then
+            raise ArgumentError.new("Invalid environment configuration: #{variable_name} must be an integer, found #{string}")
+        end
+
+        if min != nil and val < min then
+            raise ArgumentError.new("Invalid environment configuration: #{variable_name} must be at least #{min}, found #{val}")
+        end
+
+        if max != nil and val > max then
+            raise ArgumentError.new("Invalid environment configuration: #{variable_name} must be at most #{max}, found #{val}")
+        end
+
+        return val
     end
 
     def worker_thread(id)
