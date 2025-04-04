@@ -1,6 +1,4 @@
 # don't include uploaded videos
-received_videos/*
-videos/
 public/received_videos/*
 
 *.gem

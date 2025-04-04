@@ -1,0 +1,27 @@
+<%# consumer/app/views/videos/index.html.erb %>
+<div class="container">
+  <h1>Video Gallery</h1>
+
+  <div class="row">
+    <% @videos.each do |video| %>
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <div class="ratio ratio-16x9">
+            <video controls preload="metadata">
+              <source src="<%= video[:url] %>" type="video/mp4">
+              Your browser doesn't support HTML5 video.
+            </video>
+          </div>
+          <div class="card-body">
+            <h5 class="card-title"><%= video[:name] %></h5>
+            <p class="card-text">
+              <small class="text-muted">
+                <%= video[:size] %> • <%= time_ago_in_words(video[:created_at]) %> ago
+              </small>
+            </p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
