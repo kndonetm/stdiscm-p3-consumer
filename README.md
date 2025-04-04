@@ -51,23 +51,8 @@ Ensure the following are installed:
     VIDEO_DIRECTORY="consumer/public/received_videos"   # Set the directory for received videos
     ```
 
-4. Create storage directory for received videos.
+4. Install the dependencies.
     ```sh
-    mkdir -p received_videos        # Creating file directory
-    chmod 775 received_videos       # Setting up permissions (for unix-like systems)
-    ```
-
-5. Install the dependencies.
-    - **Frontend (Consumer):**
-    ```sh
-    cd consumer                     # Navigate inside the consumer
-    bundle install                  # Install the dependencies
-    ```
-
-    - **Backend (Server)**
-    ```sh
-    cd ..                           # Go back to the project directory
-    cd server                       # Navigate inside the server
     bundle install                  # Install the dependencies
     ```
 
@@ -109,25 +94,16 @@ Ensure the following are installed:
 
 
 ## Execution
-1. **Start the frontend (consumer):**
+1. **Start the consumer:**
 
     Ensure you're in the consumer directory and run the following:
     ```sh
-    cd consumer
-    rails s -p 3001                 # Start the frontend on port 3001
+    rails s -p 3001                 # Start consumer
     ```
 
-2. **Start the backend (server) in a new terminal:**
-    
-    In a separate terminal, navigate to the server directory and run the server:
-    ```sh
-    cd server
-    ruby test_consumer.rb           # Run the consumer backend
-    ```
+2. **Start the producer:**
 
-3. **Start the producer:**
-
-    Finally, run the producer in a new terminal:
+    Ensure you're in the producer directory and run the following:
     ```sh
     ruby test_producer.rb           # Run the producer
     ```
