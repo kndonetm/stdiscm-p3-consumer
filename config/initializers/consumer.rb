@@ -36,10 +36,7 @@ class VideoServer
                 worker_thread id
             end
 
-            thread["status"] = [ "idle" ]
-            thread["status"].extend(MonitorMixin)
-            thread["status_cond"] = thread["status"].new_cond
-
+            thread["status"] = "idle"
             @threads << thread
         end
     end
@@ -67,8 +64,10 @@ class VideoServer
 
         loop do
             request = nil
+            Thread.current["status"] = "idle"
             @queue.synchronize do
                 @queue_cond.wait_while { @queue.empty? }
+                Thread.current["status"] = "active"
                 request = @queue.shift
             end
 
@@ -95,22 +94,6 @@ class VideoServer
 
             client.close
             server.close
-
-            set_thread_status Thread.current, "idle"
-        end
-    end
-
-    def set_thread_status(thread, status)
-        thread["status"][0] = status
-    end
-
-    def assign_thread(thread, num_videos, ip, request_id)
-        thread["status"].synchronize do
-            thread["num_videos"] = num_videos
-            thread["ip"] = ip
-            thread["request_id"] = request_id
-            set_thread_status thread, "active"
-            thread["status_cond"].signal
         end
     end
 
@@ -125,7 +108,7 @@ class VideoServer
 
     def get_num_free_threads
         @threads.each_with_index.select { |thread, id|
-            thread["status"][0] == "idle"
+            thread["status"] == "idle"
         }
         .length
     end
