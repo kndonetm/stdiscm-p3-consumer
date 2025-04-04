@@ -46,17 +46,15 @@ Ensure the following are installed:
     ```ini
     NUM_CONSUMER_THREADS=4         # Adjust the number of consumer threads as needed
     MAX_QUEUE_LENGTH=10            # Set the maximum queue length for video uploads
-    BOUND_ADDR=0.0.0.0             # Set the binding address for the consumer
-    VIDEO_SERVER_PORT=3000         # Set the port for video server communication
-    VIDEO_DIRECTORY=/path/to/videos   # Set the directory for received videos
-    VIDEO_FRONTEND_PORT=3001       # Set the port for the frontend
+    BOUND_ADDR=0.0.0.0             # Set the IP address that the consumer server will accept connections from (0.0.0.0 accepts from anywhere)
+    PORT=2000                      # Set the port for video server communication
+    VIDEO_DIRECTORY="consumer/public/received_videos"   # Set the directory for received videos
     ```
-
 
 4. Create storage directory for received videos.
     ```sh
     mkdir -p received_videos        # Creating file directory
-    chmod 775 received_videos       # Setting up permissions
+    chmod 775 received_videos       # Setting up permissions (for unix-like systems)
     ```
 
 5. Install the dependencies.
@@ -98,9 +96,9 @@ Ensure the following are installed:
     Edit the `.env` with required variables:
     ```ini
     NUM_PRODUCER_THREADS=4        # Adjust the number of producer threads as needed
-    HOSTNAME=localhost            # Set the appropriate hostname
+    HOSTNAME=127.0.0.1            # Set the appropriate hostname
     PORT=3000                     # Set the port for communication
-    VIDEO_DIRECTORIES=/path/to/videos  # Set video directories
+    VIDEO_DIRECTORIES=paths/to/videos  # Set video directories (comma-separated list, e.g. "videos,videos2,videos3")
     ```
 
 5. Create storage directory for videos
