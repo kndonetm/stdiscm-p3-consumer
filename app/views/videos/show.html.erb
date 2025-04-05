@@ -1,9 +1,9 @@
 <%# consumer/app/views/videos/show.html.erb %>
-<div class="container mt-4">
+<div class="video-item mt-4">
   <h1><%= @video_name %></h1>
   
-  <div class="ratio ratio-16x9">
-    <video controls>
+  <div class="video-item">
+    <video>
       <source src="<%= video_path(@video_name) %>" type="video/mp4">
       Your browser does not support the video tag.
     </video>
