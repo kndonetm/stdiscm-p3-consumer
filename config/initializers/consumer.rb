@@ -2,6 +2,7 @@ require "socket"
 require "json"
 require "resolv"
 require "dotenv/load"
+require "streamio-ffmpeg"
 
 class VideoServer
     attr_reader :port, :server
@@ -151,8 +152,31 @@ class VideoServer
             send_ok socket
 
             puts "Received video of size #{size} from client"
-            puts "Created new file in #{filepath}"
+            puts "Created new file at #{filepath}"
+
+            # Create a new thread to compress video to not block upcoming reqs
+            Thread.start do
+                compress_video(filepath)
+                puts "Compressed video at #{filepath}"
+            end
+
         end
+    end
+
+    def compress_video(filepath, resolution = "720x480", codec = "libx265", preserve_aspect_ratio = "width")
+        options = {
+            resolution: resolution,
+            codec: codec
+        }
+        transcoder_options = {
+            preserve_aspect_ratio: preserve_aspect_ratio
+        }
+
+        tmp_filepath = File.join(@video_directory, "#{filepath}.tmp")
+
+        video = FFMPEG::Movie.new(filepath)
+        video.transcode(tmp_filepath, options, transcoder_options)
+        File.rename(tmp_filepath, filepath)
     end
 
     def receive_json(socket)
