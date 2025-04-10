@@ -88,7 +88,7 @@ class VideoServer
             num_videos.times do
                 cmd = receive_json(client)
                 if cmd["action"] == "sendFile" then
-                    receive_video cmd["size"], client, File.join(@video_directory, cmd["filename"])
+                    receive_video client, cmd
                 end
             end
 
@@ -120,19 +120,39 @@ class VideoServer
         .sum
     end
 
-    def receive_video(size, socket, filepath)
-        file = File.new(filepath, "wb")
-        num_full_blocks = size / 65536
-        num_full_blocks.times do
-            file.write(socket.read(65536))
+    def receive_video(socket, cmd)
+        size = cmd["size"]
+        hash = cmd["hash"]
+        filename = cmd["filename"]
+        filepath = File.join(@video_directory, hash + filename)
+
+        existing_videos = Dir.entries(@video_directory).select {
+            |f| File.file? File.join(@video_directory, f)
+        }
+        existing_hashes = existing_videos.map { |filename| filename[0..31] }
+        is_duplicate = existing_hashes.include? hash
+        send_json is_duplicate_video_response(is_duplicate), socket
+
+        if is_duplicate then
+            puts "Duplicate video found with hash #{hash} and filename #{filename}"
+            old_filepath = File.join(@video_directory, existing_videos.select { |f| f.start_with? hash }[0])
+            File.rename old_filepath, filepath
+            puts "Renamed file #{old_filepath} to #{filepath}"
+
+        else
+            file = File.new(filepath, "wb")
+            num_full_blocks = size / 65536
+            num_full_blocks.times do
+                file.write(socket.read(65536))
+            end
+            file.write(socket.read(size - (num_full_blocks * 65536)))
+
+            file.close
+            send_ok socket
+
+            puts "Received video of size #{size} from client"
+            puts "Created new file in #{filepath}"
         end
-        file.write(socket.read(size - (num_full_blocks * 65536)))
-
-        file.close
-        send_ok socket
-
-        puts "Received video of size #{size} from client"
-        puts "Created new file in #{filepath}"
     end
 
     def receive_json(socket)
@@ -168,6 +188,10 @@ class VideoServer
             port: port,
             num_videos: num_videos
         })
+    end
+
+    def is_duplicate_video_response(is_duplicate)
+        JSON.generate({ is_duplicate: is_duplicate })
     end
 
     def handle_client(client)
@@ -255,8 +279,12 @@ class VideoServer
     end
 end
 
-Thread.start(
+t = Thread.start(
     VideoServer.new(ENV)
 ) do |server|
     server.mainloop
+end
+
+if __FILE__ == $0
+    t.join()
 end
