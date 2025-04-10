@@ -1,9 +1,9 @@
 # consumer/app/controllers/videos_controller.rb
 class VideosController < ApplicationController
   def index
-    @videos = Dir.glob(Rails.root.join('public', 'received_videos', '*.mp4')).map do |path|
+    @videos = Dir.glob(Rails.root.join("public", "received_videos", "*.mp4")).map do |path|
       {
-        name: File.basename(path),
+        name: File.basename(path)[32..-1],  # skip video hash
         url: "received_videos/#{URI.encode_www_form_component(File.basename(path))}",
         # size: number_to_human_size(File.size(path)),
         created_at: File.ctime(path)
