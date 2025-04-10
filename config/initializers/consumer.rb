@@ -14,6 +14,23 @@ class VideoServer
         @num_threads = string_to_i_safe(settings["NUM_CONSUMER_THREADS"], "NUM_CONSUMER_THREADS", min=1, max=256)
         @queue_length = string_to_i_safe(settings["MAX_QUEUE_LENGTH"], "MAX_QUEUE_LENGTH", min=0, max=256)
 
+        @worker_thread_ports = settings["WORKER_THREAD_PORTS"].split(",")
+        @worker_thread_ports = @worker_thread_ports.map { |port|
+            string_to_i_safe port, "WORKER_THREAD_PORTS", min=0, max=65535
+        }
+
+        if @worker_thread_ports.length != 0 and @worker_thread_ports.length != @num_threads then
+            raise ArgumentError.new("Worker thread ports must be blank or of length NUM_CONSUMER_THREADS=#{@num_threads}, got length #{@worker_thread_ports.length}")
+        end
+
+        if @worker_thread_ports.include? @port then
+            raise ArgumentError.new("No worker thread ports can be equal to value of PORT")
+        end
+
+        if @worker_thread_ports.uniq != @worker_thread_ports then
+            raise ArgumentError.new("List of worker thread ports should not contain any duplicates")
+        end
+
         if not File.directory? @video_directory then
             raise ArgumentError.new("VIDEO_DIRECTORY is not a directory, got \"#{@video_directory}\"")
         end
@@ -73,17 +90,20 @@ class VideoServer
             end
 
             producer_ip, request_id, num_videos = request
-            worker_thread_port = @port + id + 1
 
             puts "Host thread #{id} assigned to receive #{num_videos} videos from producer #{producer_ip} thread #{request_id}"
+
+            worker_thread_port = @worker_thread_ports.length > 0 ? @worker_thread_ports[id] : 0
+            server = TCPServer.open(producer_ip, worker_thread_port)
+            worker_thread_port = server.addr[1]  # in case of auto-assign, get actual port value
+
+            puts "Thread #{id} opened TCP server to #{producer_ip} on port #{worker_thread_port}"
 
             @ready_to_accept.synchronize do
                 @ready_to_accept << [ request_id, worker_thread_port, num_videos ]
                 @ready_to_accept_cond.signal
             end
 
-            puts "Thread #{id} opening TCP server to #{producer_ip} on port #{worker_thread_port}"
-            server = TCPServer.open(producer_ip, worker_thread_port)
             client = server.accept
 
             num_videos.times do
