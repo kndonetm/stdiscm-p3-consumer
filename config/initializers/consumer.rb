@@ -192,7 +192,7 @@ class VideoServer
             preserve_aspect_ratio: preserve_aspect_ratio
         }
 
-        tmp_filepath = File.join(@video_directory, "#{filepath}.tmp")
+        tmp_filepath = File.join("#{filepath}.tmp.mp4")
 
         video = FFMPEG::Movie.new(filepath)
         video.transcode(tmp_filepath, options, transcoder_options)
