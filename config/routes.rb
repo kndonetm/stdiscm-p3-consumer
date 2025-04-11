@@ -3,7 +3,11 @@ Rails.application.routes.draw do
   root "videos#index"
 
   # Routes for videos
-  get "/videos/:id", to: "videos#show", as: :video
+  # get "/videos/:id", to: "videos#show", as: :video
+
+  #stream vid
+  get 'videos/stream/:name', to: 'videos#stream', as: 'video_stream'
+
   get "videos/index", to: "videos#index"
 
   # Optional: route to view video queue status

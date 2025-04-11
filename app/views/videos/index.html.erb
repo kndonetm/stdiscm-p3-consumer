@@ -4,6 +4,7 @@
 
   <div class="video_container">
     <% @videos.each do |video| %>
+      <%= link_to video_stream_path(video[:filename]), class: "video-link-wrapper", target: "_blank" do %>
       <div class="video-item">
         <div class="card">
             <video class="preview-video" muted preload="metadata">
@@ -20,6 +21,7 @@
           </div>
         </div>
       </div>
+      <% end %>
     <% end %>
   </div>
 </div>
