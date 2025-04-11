@@ -18,10 +18,6 @@ class VideosController < ApplicationController
     filename = "#{URI.decode_www_form_component(params[:name])}#{'.mp4' unless params[:name].ends_with?('.mp4')}"
 
     path = Rails.root.join("public/received_videos", filename)
-
-    Rails.logger.info "Streaming request for: #{filename}"
-    Rails.logger.info "Resolved path: #{path}"
-
     if File.exist?(path)
       send_file path, type: "video/mp4", disposition: "inline"
     else
