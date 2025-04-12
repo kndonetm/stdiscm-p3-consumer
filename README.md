@@ -1,5 +1,46 @@
 # Networked Producer and Consumer
 
+## Overview
+This project simulates a media upload service using a producer-consumer model with concurrent programming, file I/O, queueing, and network socket communication. The goal is to model real-world scenarios where video files are uploaded by producers (clients) and consumed by a media server.
+
+## Key Concepts Practiced
+- Concurrent programming (threads)
+- Network communication using sockets
+- File I/O for reading and storing media
+- Queue design using a leaky bucket
+- GUI development for media preview and playback
+
+## Components
+1. Producer
+   - Reads video files from a designated folder.
+   - Uploads video files over the network to the consumer (media server).
+   - Multiple producer threads simulate simultaneous uploads from different sources.
+
+2. Consumer
+   - Accepts concurrent uploads via network sockets.
+   - Stores uploaded videos in a single shared directory.
+   - Displays a GUI that:
+         - Shows a list of uploaded videos.
+         - Previews the first 10 seconds of the video on mouse hover.
+         - Plays the entire video when clicked.
+
+> **Note:** The producer and consumer run on separate virtual machines and communicate via the network.
+
+## Repository Links
+
+- **Producer:** https://github.com/kndonetm/stdiscm-p3-producer
+- **Consumer:** https://github.com/kndonetm/stdiscm-p3-consumer
+
+## Video Demonstration
+For easy accessibility, the following links are provided:
+
+- **YouTube:** https://youtu.be/lb-3Oeh3u28?si=9FcWLX4_jPJlCLR9
+
+## Slides
+Access the presentation slides through the provided link:
+
+- 
+
 ## Prerequisites
 Ensure the following are installed:
 - **Ruby 3.0+**
