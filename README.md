@@ -2,8 +2,6 @@
 
 ## Prerequisites
 Ensure the following are installed:
-- **(Ubuntu) WSL Terminal**
-
 - **Ruby 3.0+**
     
     Check Ruby version:
@@ -32,7 +30,7 @@ Ensure the following are installed:
     git clone https://github.com/kndonetm/stdiscm-p3-consumer.git
     ```
 
-2. In a **(Ubuntu) WSL terminal**, navigate into the project.
+2. Navigate into the project.
     ```sh
     cd stdiscm-p3-consumer
     ```
@@ -44,11 +42,17 @@ Ensure the following are installed:
     
     Edit the `.env` with required variables:
     ```ini
-    NUM_CONSUMER_THREADS=4         # Adjust the number of consumer threads as needed
-    MAX_QUEUE_LENGTH=10            # Set the maximum queue length for video uploads
-    BOUND_ADDR=0.0.0.0             # Set the IP address that the consumer server will accept connections from (0.0.0.0 accepts from anywhere)
-    PORT=2000                      # Set the port for video server communication
-    VIDEO_DIRECTORY="consumer/public/received_videos"   # Set the directory for received videos
+    # Configuration file for the video processing server
+    NUM_CONSUMER_THREADS=4
+    MAX_QUEUE_LENGTH=10
+    BOUND_ADDR=0.0.0.0
+    PORT=2000
+    VIDEO_DIRECTORY="public/received_videos"
+    
+    # Blank = automatically assign ports for worker threads
+    # Otherwise, comma-separated list of ports, e.g. "2001,2002,2003"
+    # Must have length == NUM_CONSUMER_THREADS
+    WORKER_THREAD_PORTS=
     ```
 
 4. Install the dependencies.
@@ -63,7 +67,7 @@ Ensure the following are installed:
     git clone https://github.com/kndonetm/stdiscm-p3-producer.git
     ```
 
-2. In a **(Ubuntu) WSL terminal**, navigate into the project.
+2. Navigate into the project.
     ```sh
     cd stdiscm-p3-producer
     ```
@@ -80,34 +84,32 @@ Ensure the following are installed:
     
     Edit the `.env` with required variables:
     ```ini
-    NUM_PRODUCER_THREADS=4        # Adjust the number of producer threads as needed
-    HOSTNAME=127.0.0.1            # Set the appropriate hostname
-    PORT=3000                     # Set the port for communication
-    VIDEO_DIRECTORIES=paths/to/videos  # Set video directories (comma-separated list, e.g. "videos,videos2,videos3")
+    # "localhost" or a valid IP address
+    HOSTNAME=127.0.0.1
+    
+    # port for main thread
+    PORT=2000
+    
+    # Comma-separated list of directories, e.g. "videos1,videos2,videos3"
+    # 1 worker thread is generated per directory
+    VIDEO_DIRECTORIES=cat_videos,dog_videos,other_animal_videos
     ```
-
-5. Create storage directory for videos
-    ```sh
-    mkdir -p uploaded_videos        # Creating file directory for uploaded videos
-    chmod 775 uploaded_videos       # Setting up permissions
-    ```
-
 
 ## Execution
 1. **Start the consumer:**
 
     Ensure you're in the consumer directory and run the following:
     ```sh
-    rails s -p 3001                 # Start consumer
+    rails s -p 3000                 # Start consumer
     ```
 
 2. **Start the producer:**
 
     Ensure you're in the producer directory and run the following:
     ```sh
-    ruby test_producer.rb           # Run the producer
+    ruby producer.rb           # Run the producer
     ```
 
 4. View the frontend updates:
 
-    Reload the page where the frontend is hosted (e.g., http://localhost:3001) to see the changes.
+    Reload the page where the frontend is hosted (e.g., http://localhost:3000) to see the changes.
